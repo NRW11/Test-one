@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>แบบฟอร์มปิดงาน</title>
+<style>
+  :root{
+    --bg:#0f1417;
+    --panel:#171e24;
+    --panel-2:#1d252c;
+    --border:#262f37;
+    --text:#e8edf2;
+    --text-dim:#8b98a5;
+    --accent:#ff9f1c;
+    --accent-dim:#7a5416;
+    --teal:#2dd4bf;
+    --danger:#ef4444;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,"Segoe UI","Sarabun","Noto Sans Thai",sans-serif;
+    padding:16px;
+    padding-bottom:80px;
+  }
+  .wrap{max-width:520px;margin:0 auto;}
+  header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .stamp{
+    width:38px;height:38px;border-radius:10px;
+    background:linear-gradient(155deg,var(--accent),#c9720a);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;color:#1a1006;font-size:18px;
+    flex-shrink:0;
+  }
+  h1{font-size:18px;margin:0;line-height:1.3;}
+  .sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  label{
+    display:block;
+    font-size:13px;
+    color:var(--text-dim);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  input[type=text], input[type=date], select, textarea{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:10px;
+    padding:11px 12px;
+    font-size:15px;
+    font-family:inherit;
+    -webkit-appearance:none;
+  }
+  textarea{resize:vertical;min-height:64px;}
+  input:focus, select:focus, textarea:focus{
+    outline:none;
+    border-color:var(--accent);
+  }
+
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;}
+  button{
+    font-family:inherit;
+    border:none;
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--accent);color:#1a1006;flex:1;}
+  .btn-ghost{background:var(--panel-2);color:var(--text);border:1px solid var(--border);}
+  .btn-teal{background:var(--teal);color:#04211c;}
+  .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,.4);padding:8px 10px;}
+  .btn-small{padding:8px 12px;font-size:13px;}
+  .link-btn{background:none;color:var(--text-dim);text-decoration:underline;padding:4px 0;font-size:13px;font-weight:500;}
+
+  /* perforated divider = "tear here" ticket look */
+  .perf{
+    display:flex;align-items:center;gap:6px;margin:20px 0;
+    color:var(--text-dim);font-size:11px;
+  }
+  .perf::before,.perf::after{
+    content:"";flex:1;height:0;
+    border-top:2px dashed var(--border);
+  }
+
+  .output-box{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px;
+    font-size:14px;
+    white-space:pre-wrap;
+    line-height:1.7;
+    font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;
+  }
+
+  .editor-row{
+    display:flex;gap:8px;align-items:center;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px;margin-bottom:8px;
+  }
+  .editor-row input[type=text]{flex:1;padding:8px 10px;font-size:14px;}
+  .editor-row select{width:auto;flex-shrink:0;font-size:13px;padding:8px;}
+  .order-btns{display:flex;flex-direction:column;gap:2px;}
+  .order-btns button{padding:2px 6px;font-size:11px;background:transparent;color:var(--text-dim);}
+
+  .hidden{display:none !important;}
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
+    background:var(--teal);color:#04211c;padding:10px 18px;border-radius:999px;
+    font-size:13px;font-weight:600;opacity:0;pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="stamp">✓</div>
+    <div>
+      <h1>แบบฟอร์มปิดงาน</h1>
+      <div class="sub">กรอกครั้งเดียว รวมข้อความให้อัตโนมัติ</div>
+    </div>
+  </header>
+
+  <div class="card" id="formCard">
+    <div id="fieldsContainer"></div>
+    <div class="perf">แตะเพื่อสร้างข้อความ</div>
+    <div class="btnrow">
+      <button class="btn-primary" id="genBtn">สร้างข้อความ</button>
+      <button class="btn-ghost" id="clearBtn">ล้างฟอร์ม</button>
+    </div>
+    <div style="text-align:center;margin-top:10px;">
+      <button class="link-btn" id="toggleEditBtn">แก้ไขฟอร์ม</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="editorCard">
+    <label style="margin-bottom:10px;">ช่องข้อมูลในฟอร์ม</label>
+    <div id="editorList"></div>
+    <div class="editor-row">
+      <input type="text" id="newFieldLabel" placeholder="ชื่อช่องใหม่ เช่น เบอร์ติดต่อ">
+      <select id="newFieldType">
+        <option value="text">ข้อความ</option>
+        <option value="textarea">ข้อความยาว</option>
+        <option value="date">วันที่</option>
+        <option value="select">ตัวเลือก (มี/ไม่มี)</option>
+      </select>
+      <button class="btn-teal btn-small" id="addFieldBtn">เพิ่ม</button>
+    </div>
+    <div class="btnrow" style="margin-top:10px;">
+      <button class="btn-primary" id="saveFieldsBtn">บันทึกการเปลี่ยนแปลง</button>
+      <button class="btn-ghost" id="resetFieldsBtn">คืนค่าเริ่มต้น</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="outputCard">
+    <label>ข้อความสรุป (คัดลอกไปวางได้เลย)</label>
+    <div class="output-box" id="outputBox"></div>
+    <div class="btnrow" style="margin-top:12px;">
+      <button class="btn-teal" id="copyBtn">คัดลอกข้อความ</button>
+      <button class="btn-ghost" id="shareBtn">แชร์</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_FIELDS = 'jobform_fields_v1';
+const STORAGE_VALUES = 'jobform_values_v1';
+const HISTORY_PREFIX = 'jobform_hist_';
+const MAX_HISTORY = 30;
+
+const DEFAULT_FIELDS = [
+  {key:'company', label:'บริษัท', type:'text', hist:true},
+  {key:'region', label:'ภาค', type:'text', hist:true},
+  {key:'jobno', label:'หมายเลขงาน', type:'text', hist:false},
+  {key:'branch', label:'สาขา', type:'text', hist:true},
+  {key:'detail', label:'รายละเอียดงาน', type:'textarea', hist:false},
+  {key:'cause', label:'สาเหตุ', type:'textarea', hist:false},
+  {key:'fix', label:'การแก้ไข', type:'textarea', hist:false},
+  {key:'technician', label:'ชื่อช่าง', type:'text', hist:true},
+  {key:'startdate', label:'วันที่เข้าดำเนินการ', type:'date', hist:false},
+  {key:'enddate', label:'วันที่เสร็จงาน', type:'date', hist:false},
+  {key:'videocall', label:'Video Call', type:'text', hist:true}
+];
+
+const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function loadFields(){
+  try{
+    const raw = localStorage.getItem(STORAGE_FIELDS);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_FIELDS));
+}
+function saveFields(fields){
+  localStorage.setItem(STORAGE_FIELDS, JSON.stringify(fields));
+}
+function loadValues(){
+  try{
+    const raw = localStorage.getItem(STORAGE_VALUES);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {};
+}
+function saveValues(values){
+  localStorage.setItem(STORAGE_VALUES, JSON.stringify(values));
+}
+function getHistory(key){
+  try{
+    const raw = localStorage.getItem(HISTORY_PREFIX+key);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return [];
+}
+function pushHistory(key, value){
+  if(!value) return;
+  let hist = getHistory(key);
+  hist = hist.filter(v => v !== value);
+  hist.unshift(value);
+  if(hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
+  localStorage.setItem(HISTORY_PREFIX+key, JSON.stringify(hist));
+}
+function slugify(label){
+  const base = 'f_' + label.replace(/[^a-zA-Zก-๙0-9]/g,'').slice(0,16);
+  return base + '_' + Date.now().toString(36).slice(-4);
+}
+function formatDateThai(iso){
+  if(!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  if(isNaN(d)) return iso;
+  const day = d.getDate();
+  const month = THAI_MONTHS[d.getMonth()];
+  const year = d.getFullYear() + 543;
+  return `${day} ${month} ${year}`;
+}
+
+let fields = loadFields();
+let values = loadValues();
+
+function renderForm(){
+  const container = document.getElementById('fieldsContainer');
+  container.innerHTML = '';
+  fields.forEach(f => {
+    const wrap = document.createElement('div');
+    wrap.className = 'field';
+
+    const label = document.createElement('label');
+    label.textContent = f.label;
+    wrap.appendChild(label);
+
+    let input;
+    if(f.type === 'textarea'){
+      input = document.createElement('textarea');
+    } else if(f.type === 'date'){
+      input = document.createElement('input');
+      input.type = 'date';
+    } else if(f.type === 'select'){
+      input = document.createElement('select');
+      ['','มี','ไม่มี'].forEach(opt=>{
+        const o = document.createElement('option');
+        o.value = opt; o.textContent = opt || '— เลือก —';
+        input.appendChild(o);
+      });
+    } else {
+      input = document.createElement('input');
+      input.type = 'text';
+      if(f.hist){
+        input.setAttribute('list', 'dl_'+f.key);
+        const dl = document.createElement('datalist');
+        dl.id = 'dl_'+f.key;
+        getHistory(f.key).forEach(v=>{
+          const o = document.createElement('option');
+          o.value = v;
+          dl.appendChild(o);
+        });
+        wrap.appendChild(dl);
+      }
+    }
+    input.id = 'inp_'+f.key;
+    input.value = values[f.key] || '';
+    input.addEventListener('input', ()=>{
+      values[f.key] = input.value;
+      saveValues(values);
+    });
+    wrap.appendChild(input);
+    container.appendChild(wrap);
+  });
+}
+
+function generateMessage(){
+  const lines = fields.map(f=>{
+    let v = values[f.key] || '';
+    if(f.type === 'date' && v) v = formatDateThai(v);
+    return `${f.label} : ${v}`;
+  });
+  const text = lines.join('\n');
+
+  fields.forEach(f=>{
+    if(f.hist) pushHistory(f.key, values[f.key]);
+  });
+  renderForm();
+
+  document.getElementById('outputBox').textContent = text;
+  document.getElementById('outputCard').classList.remove('hidden');
+  document.getElementById('outputCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+document.getElementById('genBtn').addEventListener('click', generateMessage);
+
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  values = {};
+  saveValues(values);
+  renderForm();
+  document.getElementById('outputCard').classList.add('hidden');
+});
+
+document.getElementById('copyBtn').addEventListener('click', async ()=>{
+  const text = document.getElementById('outputBox').textContent;
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast('คัดลอกแล้ว');
+  }catch(e){
+    showToast('คัดลอกไม่สำเร็จ ลองแตะค้างที่ข้อความ');
+  }
+});
+
+document.getElementById('shareBtn').addEventListener('click', async ()=>{
+  const text = document.getElementById('outputBox').textContent;
+  if(navigator.share){
+    try{ await navigator.share({text}); }catch(e){}
+  } else {
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast('อุปกรณ์นี้แชร์ตรงไม่ได้ คัดลอกให้แล้ว');
+    }catch(e){}
+  }
+});
+
+// ---- field editor ----
+const editorCard = document.getElementById('editorCard');
+document.getElementById('toggleEditBtn').addEventListener('click', ()=>{
+  editorCard.classList.toggle('hidden');
+  if(!editorCard.classList.contains('hidden')) renderEditor();
+});
+
+function renderEditor(){
+  const list = document.getElementById('editorList');
+  list.innerHTML = '';
+  fields.forEach((f, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'editor-row';
+
+    const labelInput = document.createElement('input');
+    labelInput.type = 'text';
+    labelInput.value = f.label;
+    labelInput.addEventListener('input', ()=>{ f.label = labelInput.value; });
+    row.appendChild(labelInput);
+
+    const typeSelect = document.createElement('select');
+    [['text','ข้อความ'],['textarea','ข้อความยาว'],['date','วันที่'],['select','มี/ไม่มี']].forEach(([val,txt])=>{
+      const o = document.createElement('option');
+      o.value = val; o.textContent = txt;
+      if(f.type === val) o.selected = true;
+      typeSelect.appendChild(o);
+    });
+    typeSelect.addEventListener('change', ()=>{ f.type = typeSelect.value; });
+    row.appendChild(typeSelect);
+
+    const orderWrap = document.createElement('div');
+    orderWrap.className = 'order-btns';
+    const upBtn = document.createElement('button');
+    upBtn.textContent = '▲';
+    upBtn.addEventListener('click', ()=>{
+      if(idx>0){ [fields[idx-1],fields[idx]]=[fields[idx],fields[idx-1]]; renderEditor(); }
+    });
+    const downBtn = document.createElement('button');
+    downBtn.textContent = '▼';
+    downBtn.addEventListener('click', ()=>{
+      if(idx<fields.length-1){ [fields[idx+1],fields[idx]]=[fields[idx],fields[idx+1]]; renderEditor(); }
+    });
+    orderWrap.appendChild(upBtn);
+    orderWrap.appendChild(downBtn);
+    row.appendChild(orderWrap);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-danger';
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', ()=>{
+      fields.splice(idx,1);
+      renderEditor();
+    });
+    row.appendChild(delBtn);
+
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('addFieldBtn').addEventListener('click', ()=>{
+  const labelInput = document.getElementById('newFieldLabel');
+  const typeSelect = document.getElementById('newFieldType');
+  const label = labelInput.value.trim();
+  if(!label) return;
+  fields.push({key: slugify(label), label, type: typeSelect.value, hist: false});
+  labelInput.value = '';
+  renderEditor();
+});
+
+document.getElementById('saveFieldsBtn').addEventListener('click', ()=>{
+  saveFields(fields);
+  renderForm();
+  editorCard.classList.add('hidden');
+  showToast('บันทึกฟอร์มแล้ว');
+});
+
+document.getElementById('resetFieldsBtn').addEventListener('click', ()=>{
+  if(confirm('คืนค่าฟอร์มเริ่มต้น? ช่องที่เพิ่มเองจะหายไป')){
+    fields = JSON.parse(JSON.stringify(DEFAULT_FIELDS));
+    saveFields(fields);
+    renderEditor();
+    renderForm();
+  }
+});
+
+renderForm();
+</script>
+</body>
+</html>
