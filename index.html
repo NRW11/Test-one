@@ -169,6 +169,7 @@
         <option value="text">ข้อความ</option>
         <option value="textarea">ข้อความยาว</option>
         <option value="date">วันที่</option>
+        <option value="datetime">วันที่และเวลา</option>
         <option value="select">ตัวเลือก (มี/ไม่มี)</option>
       </select>
       <button class="btn-teal btn-small" id="addFieldBtn">เพิ่ม</button>
@@ -207,8 +208,8 @@ const DEFAULT_FIELDS = [
   {key:'cause', label:'สาเหตุ', type:'textarea', hist:false, keep:false},
   {key:'fix', label:'การแก้ไข', type:'textarea', hist:false, keep:false},
   {key:'technician', label:'ชื่อช่าง', type:'text', hist:true, keep:true},
-  {key:'startdate', label:'วันที่เข้าดำเนินการ', type:'date', hist:false, keep:true},
-  {key:'enddate', label:'วันที่เสร็จงาน', type:'date', hist:false, keep:true},
+  {key:'startdate', label:'วันที่เข้าดำเนินการ', type:'datetime', hist:false, keep:true},
+  {key:'enddate', label:'วันที่เสร็จงาน', type:'datetime', hist:false, keep:true},
   {key:'videocall', label:'Video Call', type:'text', hist:true, keep:true}
 ];
 
@@ -224,6 +225,9 @@ function loadFields(){
         if(typeof f.keep === 'undefined'){
           const def = DEFAULT_FIELDS.find(d=>d.key===f.key);
           f.keep = def ? def.keep : true;
+        }
+        if((f.key === 'startdate' || f.key === 'enddate') && f.type === 'date'){
+          f.type = 'datetime';
         }
       });
       return saved;
@@ -272,6 +276,17 @@ function formatDateThai(iso){
   const year = d.getFullYear() + 543;
   return `${day} ${month} ${year}`;
 }
+function formatDateTimeThai(val){
+  if(!val) return '';
+  const d = new Date(val);
+  if(isNaN(d)) return val;
+  const day = d.getDate();
+  const month = THAI_MONTHS[d.getMonth()];
+  const year = d.getFullYear() + 543;
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  return `${day} ${month} ${year} ${hh}:${mm} น.`;
+}
 
 let fields = loadFields();
 let values = loadValues();
@@ -293,6 +308,9 @@ function renderForm(){
     } else if(f.type === 'date'){
       input = document.createElement('input');
       input.type = 'date';
+    } else if(f.type === 'datetime'){
+      input = document.createElement('input');
+      input.type = 'datetime-local';
     } else if(f.type === 'select'){
       input = document.createElement('select');
       ['','มี','ไม่มี'].forEach(opt=>{
@@ -330,6 +348,7 @@ function generateMessage(){
   const lines = fields.map(f=>{
     let v = values[f.key] || '';
     if(f.type === 'date' && v) v = formatDateThai(v);
+    if(f.type === 'datetime' && v) v = formatDateTimeThai(v);
     return `${f.label} : ${v}`;
   });
   const text = lines.join('\n');
@@ -416,7 +435,7 @@ function renderEditor(){
     row.appendChild(labelInput);
 
     const typeSelect = document.createElement('select');
-    [['text','ข้อความ'],['textarea','ข้อความยาว'],['date','วันที่'],['select','มี/ไม่มี']].forEach(([val,txt])=>{
+    [['text','ข้อความ'],['textarea','ข้อความยาว'],['date','วันที่'],['datetime','วันที่และเวลา'],['select','มี/ไม่มี']].forEach(([val,txt])=>{
       const o = document.createElement('option');
       o.value = val; o.textContent = txt;
       if(f.type === val) o.selected = true;
